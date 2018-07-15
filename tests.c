@@ -103,7 +103,15 @@ static void print_yespower_loop(yespower_version_t version, const char *pers)
 
 	printf("XOR of yespower(%u, ...) = ", (unsigned int)version);
 
-	for (i = 0; i < sizeof(src); i++)
+	/*
+	 * This value of src is chosen to trigger duplicate index in the last
+	 * SMix2 invocation in yespower 0.5 for N=2048 with at least one of the
+	 * values of r below.  This is needed to test that a non-save version
+	 * of BlockMix is used in that special case.  Most other values of src
+	 * would leave this untested.
+	 */
+	src[0] = 43;
+	for (i = 1; i < sizeof(src); i++)
 		src[i] = i * 3;
 
 	for (N = 1024; N <= 4096; N <<= 1) {

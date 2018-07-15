@@ -12,5 +12,5 @@ yespower(10, 4096, 32, NULL) = 77 1a ee fd a8 fe 79 a0 82 5b c7 f2 ae e1 62 ab 5
 yespower(10, 2048, 32, NULL) = d5 ef b8 13 cd 26 3e 9b 34 54 01 30 23 3c bb c6 a9 21 fb ff 34 31 e5 ec 1a 1a bd e2 ae a6 ff 4d
 yespower(10, 1024, 32, NULL) = 50 1b 79 2d b4 2e 38 8f 6e 7d 45 3c 95 d0 3a 12 a3 60 16 a5 15 4a 68 83 90 dd c6 09 a4 0c 67 99
 yespower(10, 1024, 32, "personality test") = 1f 02 69 ac f5 65 c4 9a dc 0e f9 b8 f2 6a b3 80 8c dc 38 39 4a 25 4f dd ee dc c3 aa cf f6 ad 9d
-XOR of yespower(5, ...) = 44 6c 17 2d fd 2b 39 64 d9 34 08 a3 bf 55 9e c7 42 31 7a 2c f2 b2 48 7c ec 41 17 e8 3d 7d 96 b0
-XOR of yespower(10, ...) = a9 fe c9 66 53 bd 25 ea 18 24 f3 f9 cc 96 c5 98 5f 19 1d 1d ca ee d3 e9 d0 52 f8 ac 76 bc bb da
+XOR of yespower(5, ...) = ae f1 32 91 87 0f 55 70 47 f4 2e 9b ef a6 16 df e5 f1 96 77 e1 3f 8b a6 92 f7 c5 97 55 a0 f5 0e
+XOR of yespower(10, ...) = 8d 13 c5 fb 07 30 96 75 d1 b8 48 92 77 ba 4b e4 40 33 be df ae 7a 60 43 8a 9b e2 1f 3a 7b 12 37
