@@ -1,6 +1,6 @@
 /*-
  * Copyright 2009 Colin Percival
- * Copyright 2012-2018 Alexander Peslyak
+ * Copyright 2012-2019 Alexander Peslyak
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1049,7 +1049,7 @@ int yespower(yespower_local_t *local,
 	    (N & (N - 1)) != 0 ||
 	    (!pers && perslen)) {
 		errno = EINVAL;
-		return -1;
+		goto fail;
 	}
 
 	/* Allocate memory */
@@ -1067,9 +1067,9 @@ int yespower(yespower_local_t *local,
 	need = B_size + V_size + XY_size + ctx.Sbytes;
 	if (local->aligned_size < need) {
 		if (free_region(local))
-			return -1;
+			goto fail;
 		if (!alloc_region(local, need))
-			return -1;
+			goto fail;
 	}
 	B = (uint8_t *)local->aligned;
 	V = (salsa20_blk_t *)((uint8_t *)B + B_size);
@@ -1113,6 +1113,10 @@ int yespower(yespower_local_t *local,
 
 	/* Success! */
 	return 0;
+
+fail:
+	memset(dst, 0xff, sizeof(*dst));
+	return -1;
 }
 
 /**
@@ -1129,8 +1133,7 @@ int yespower_tls(const uint8_t *src, size_t srclen,
 	static __thread yespower_local_t local;
 
 	if (!initialized) {
-		if (yespower_init_local(&local))
-			return -1;
+		init_region(&local);
 		initialized = 1;
 	}
 
