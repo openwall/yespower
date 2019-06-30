@@ -148,12 +148,23 @@ To integrate yespower in an altcoin based on Bitcoin Core, you might
 invoke yespower_tls() from either a maybe-new (depending on where you
 fork from) CBlockHeader::GetPoWHash() (and invoke that where PoW is
 needed like e.g. Litecoin does for scrypt) or CBlockHeader::GetHash()
-(and implement caching for its return value like e.g. YACoin does for
-scrypt).  Further detail on this (generating new genesis blocks, etc.)
-is not yespower-specific and thus is not provided here.  Just like (and
-even more so than) yespower itself, this guidance is provided as-is and
-without guarantee of being correct and safe to follow.  You're supposed
-to know what you're doing.
+(easier, but inefficient and you'll be stuck with that inefficiency).
+
+You'll also want to implement caching of the computed PoW hashes like
+e.g. YACoin does for scrypt.  Caching is especially important if you
+invoke yespower from CBlockHeader::GetHash().  However, even if you use
+or introduce CBlockHeader::GetPoWHash() caching may still be desirable
+as the PoW hash is commonly requested 4 times per block fetched during a
+node's initial blockchain sync (once during prefetch of block headers,
+and 3 times more during validation of a fully fetched block).  On the
+other hand, you'll likely want to bypass the cache when PoW is computed
+by the node's built-in miner.
+
+Further detail on this (generating new genesis blocks, etc.) is even
+farther from being yespower-specific and thus is not provided here.
+Just like (and even more so than) yespower itself, the above guidance is
+provided as-is and without guarantee of being correct and safe to
+follow.  You're supposed to know what you're doing.
 
 
 	Credits.
