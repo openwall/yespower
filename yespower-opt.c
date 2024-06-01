@@ -1129,8 +1129,13 @@ fail:
 int yespower_tls(const uint8_t *src, size_t srclen,
     const yespower_params_t *params, yespower_binary_t *dst)
 {
+#ifdef _WIN32
+	static __declspec(thread) int initialized = 0;
+	static __declspec(thread) yespower_local_t local;
+#else
 	static __thread int initialized = 0;
 	static __thread yespower_local_t local;
+#endif
 
 	if (!initialized) {
 		init_region(&local);

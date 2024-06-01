@@ -69,10 +69,17 @@ int main(int argc, const char * const *argv)
 
 	printf("Will use %.2f KiB RAM\n", 0.125 * params.N * params.r);
 
+#ifdef _WIN32
+	static __declspec(thread) union {
+		uint8_t u8[80];
+		uint32_t u32[20];
+	} src;
+#else
 	static __thread union {
 		uint8_t u8[80];
 		uint32_t u32[20];
 	} src;
+#endif
 	yespower_binary_t dst;
 	unsigned int i;
 
