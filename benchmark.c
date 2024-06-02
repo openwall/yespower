@@ -69,7 +69,13 @@ int main(int argc, const char * const *argv)
 
 	printf("Will use %.2f KiB RAM\n", 0.125 * params.N * params.r);
 
-	static __thread union {
+	static
+#ifdef _MSC_VER
+	__declspec(thread)
+#else
+	__thread
+#endif
+	union {
 		uint8_t u8[80];
 		uint32_t u32[20];
 	} src;
