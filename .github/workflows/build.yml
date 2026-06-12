@@ -1,0 +1,48 @@
+name: build-and-test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # Linux: the supplied Makefile works as-is (gcc, -lrt, OpenMP).
+      - name: Build and test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          make
+          ./tests > TESTS-OUT
+          diff -u TESTS-OK TESTS-OUT
+          echo PASSED
+
+      # macOS: Apple's linker has no -lrt and rejects the Makefile's -s flag,
+      # and the benchmark needs OpenMP, so build only the "tests" target with
+      # overridden flags.
+      - name: Build and test (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          make tests CFLAGS="-Wall -O2 -fomit-frame-pointer" LDFLAGS=""
+          ./tests > TESTS-OUT
+          diff -u TESTS-OK TESTS-OUT
+          echo PASSED
+
+      # Windows: build and test with the MSVC toolchain via build.ps1, which
+      # builds tests.exe, runs it, diffs against TESTS-OK, and exits non-zero
+      # on mismatch.  shell: powershell uses Windows PowerShell 5.1 (shipped
+      # with Windows) rather than PowerShell 7, verifying 5.1 compatibility.
+      - name: Build and test (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: .\build.ps1 -Target check
