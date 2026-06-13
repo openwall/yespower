@@ -39,7 +39,7 @@ all: $(PROJ)
 check: tests
 	@echo 'Running tests'
 	@time ./tests | tee TESTS-OUT
-	@diff -U0 TESTS-OK TESTS-OUT && echo PASSED || echo FAILED
+	@diff -U0 TESTS-OK TESTS-OUT && echo PASSED || { echo FAILED; exit 1; }
 
 ref:
 	$(MAKE) $(PROJ) OBJS_CORE=yespower-ref.o

@@ -19,15 +19,14 @@ jobs:
         uses: actions/checkout@v6
 
       # Linux: the supplied Makefile works as-is (gcc).  "make check" builds and
-      # runs the "tests" target, then prints PASSED/FAILED; grep turns a mismatch
-      # into a non-zero exit (the check target itself exits 0 on failure).  The
-      # "tests" binary needs neither -lrt nor -s, so LDFLAGS="" drops them.
-      # Then build and run "benchmark" to compile-cover its OpenMP/POSIX path
-      # (it keeps the default -fopenmp and -lrt, which gcc on Linux supports).
+      # runs the "tests" target, then exits non-zero on a mismatch.  The "tests"
+      # binary needs neither -lrt nor -s, so LDFLAGS="" drops them.  Then build
+      # and run "benchmark" to compile-cover its OpenMP/POSIX path (it keeps the
+      # default -fopenmp and -lrt, which gcc on Linux supports).
       - name: Build and test (Linux)
         if: runner.os == 'Linux'
         run: |
-          make check LDFLAGS="" | tee /dev/stderr | grep -qx PASSED
+          make check LDFLAGS=""
           make benchmark
           ./benchmark
 
@@ -36,7 +35,7 @@ jobs:
       # because it needs OpenMP, which Apple's clang doesn't bundle.
       - name: Build and test (macOS)
         if: runner.os == 'macOS'
-        run: make check CFLAGS="-Wall -O2 -fomit-frame-pointer" LDFLAGS="" | tee /dev/stderr | grep -qx PASSED
+        run: make check CFLAGS="-Wall -O2 -fomit-frame-pointer" LDFLAGS=""
 
       # Windows: build and test with the MSVC toolchain via build.ps1.  The
       # "check" target builds tests.exe, runs it, diffs against TESTS-OK, and
