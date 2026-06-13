@@ -9,11 +9,12 @@
     "tests" and "benchmark" programs with cl.exe / link.exe.
 
     Targets (mirroring the Makefile):
-        build.ps1                 # build tests.exe and benchmark.exe (optimized)
-        build.ps1 -Target check   # build and run tests.exe, diff against TESTS-OK
-        build.ps1 -Target ref     # build using the reference implementation
+        build.ps1                     # build tests.exe and benchmark.exe (optimized)
+        build.ps1 -Target check       # build and run tests.exe, diff against TESTS-OK
+        build.ps1 -Target benchmark   # build and run benchmark.exe
+        build.ps1 -Target ref         # build using the reference implementation
         build.ps1 -Target check-ref
-        build.ps1 -Target clean   # remove build artifacts
+        build.ps1 -Target clean       # remove build artifacts
 
 .NOTES
     Requires Visual Studio 2026 (Community is fine) with the
@@ -138,6 +139,14 @@ function Build-Benchmark {
     Write-Host "Built benchmark.exe"
 }
 
+function Invoke-Benchmark {
+    param([string]$Core = $OBJS_CORE_OPT)
+    Build-Benchmark -Core $Core
+    Write-Host 'Running benchmark'
+    & .\benchmark.exe | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "benchmark.exe failed with exit code $LASTEXITCODE" }
+}
+
 function Invoke-Check {
     param([string]$Core = $OBJS_CORE_OPT)
     Build-Tests -Core $Core
@@ -176,7 +185,7 @@ switch ($Target) {
         switch ($Target) {
             'all'       { Build-Tests; Build-Benchmark }
             'tests'     { Build-Tests }
-            'benchmark' { Build-Benchmark }
+            'benchmark' { Invoke-Benchmark }
             'check'     { Invoke-Check }
             'ref'       { Build-Tests -Core $OBJS_CORE_REF; Build-Benchmark -Core $OBJS_CORE_REF }
             'check-ref' { Invoke-Check -Core $OBJS_CORE_REF }

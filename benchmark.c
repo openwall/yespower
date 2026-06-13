@@ -22,7 +22,11 @@
 #include <stdlib.h> /* for atoi() */
 #include <string.h>
 #include <time.h>
-#ifdef _MSC_VER
+#ifndef _MSC_VER
+#include <unistd.h>
+#include <sys/times.h>
+#include <sched.h>
+#else
 /*
  * MSVC lacks the POSIX <unistd.h>, <sys/times.h> and <sched.h> interfaces used
  * below.  Provide a minimal shim implemented on top of the Win32 API so that
@@ -73,16 +77,6 @@ static clock_t times(struct tms *buf)
 	QueryPerformanceCounter(&now);
 	return (clock_t)(now.QuadPart * 1000 / freq.QuadPart);
 }
-
-/* Pretend we are an unprivileged user so the SCHED_RR block is skipped. */
-static int geteuid(void)
-{
-	return 1;
-}
-#else
-#include <unistd.h>
-#include <sys/times.h>
-#include <sched.h>
 #endif
 
 #include "yespower.h"
@@ -230,6 +224,7 @@ int main(int argc, const char * const *argv)
 
 	unsigned long long count1 = count, count_restart = 0;
 
+#ifdef SCHED_RR
 	if (!geteuid()) {
 		puts("Running as root, so trying to set SCHED_RR");
 #pragma omp parallel
@@ -239,6 +234,7 @@ int main(int argc, const char * const *argv)
 				perror("sched_setscheduler");
 		}
 	}
+#endif
 
 	start = times(&start_tms);
 

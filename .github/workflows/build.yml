@@ -18,31 +18,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # Linux: the supplied Makefile works as-is (gcc, -lrt, OpenMP).
+      # Linux: the supplied Makefile works as-is (gcc).  "make check" builds and
+      # runs the "tests" target, then prints PASSED/FAILED; grep turns a mismatch
+      # into a non-zero exit (the check target itself exits 0 on failure).  The
+      # "tests" binary needs neither -lrt nor -s, so LDFLAGS="" drops them.
+      # Then build and run "benchmark" to compile-cover its OpenMP/POSIX path
+      # (it keeps the default -fopenmp and -lrt, which gcc on Linux supports).
       - name: Build and test (Linux)
         if: runner.os == 'Linux'
         run: |
-          make
-          ./tests > TESTS-OUT
-          diff -u TESTS-OK TESTS-OUT
-          echo PASSED
+          make check LDFLAGS="" | tee /dev/stderr | grep -qx PASSED
+          make benchmark
+          ./benchmark
 
-      # macOS: Apple's linker has no -lrt and rejects the Makefile's -s flag,
-      # and the benchmark needs OpenMP, so build only the "tests" target with
-      # overridden flags.
+      # macOS: as Linux, but also override CFLAGS to drop -march=native, which
+      # Apple's clang doesn't accept on the arm64 runners.  benchmark is skipped
+      # because it needs OpenMP, which Apple's clang doesn't bundle.
       - name: Build and test (macOS)
         if: runner.os == 'macOS'
-        run: |
-          make tests CFLAGS="-Wall -O2 -fomit-frame-pointer" LDFLAGS=""
-          ./tests > TESTS-OUT
-          diff -u TESTS-OK TESTS-OUT
-          echo PASSED
+        run: make check CFLAGS="-Wall -O2 -fomit-frame-pointer" LDFLAGS="" | tee /dev/stderr | grep -qx PASSED
 
-      # Windows: build and test with the MSVC toolchain via build.ps1, which
-      # builds tests.exe, runs it, diffs against TESTS-OK, and exits non-zero
-      # on mismatch.  shell: powershell uses Windows PowerShell 5.1 (shipped
-      # with Windows) rather than PowerShell 7, verifying 5.1 compatibility.
+      # Windows: build and test with the MSVC toolchain via build.ps1.  The
+      # "check" target builds tests.exe, runs it, diffs against TESTS-OK, and
+      # exits non-zero on mismatch; the "benchmark" target builds and runs
+      # benchmark.exe to compile-cover its MSVC shim path.  shell: powershell
+      # uses Windows PowerShell 5.1 (shipped with Windows) rather than
+      # PowerShell 7, verifying 5.1 compatibility.
       - name: Build and test (Windows)
         if: runner.os == 'Windows'
         shell: powershell
-        run: .\build.ps1 -Target check
+        run: |
+          .\build.ps1 -Target check
+          .\build.ps1 -Target benchmark
