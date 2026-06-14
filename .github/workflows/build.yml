@@ -18,31 +18,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # Linux: the supplied Makefile works as-is (gcc).  "make check" builds and
-      # runs the "tests" target, then exits non-zero on a mismatch.  The "tests"
-      # binary needs neither -lrt nor -s, so LDFLAGS="" drops them.  Then build
-      # and run "benchmark" to compile-cover its OpenMP/POSIX path (it keeps the
-      # default -fopenmp and -lrt, which gcc on Linux supports).
       - name: Build and test (Linux)
         if: runner.os == 'Linux'
         run: |
-          make check LDFLAGS=""
+          make check
           make benchmark
           ./benchmark
 
-      # macOS: as Linux, but also override CFLAGS to drop -march=native, which
-      # Apple's clang doesn't accept on the arm64 runners.  benchmark is skipped
-      # because it needs OpenMP, which Apple's clang doesn't bundle.
+      # Apple's clang doesn't accept -march=native on arm64 and doesn't bundle
+      # OpenMP, so override CFLAGS/LDFLAGS and skip benchmark.
       - name: Build and test (macOS)
         if: runner.os == 'macOS'
         run: make check CFLAGS="-Wall -O2 -fomit-frame-pointer" LDFLAGS=""
 
-      # Windows: build and test with the MSVC toolchain via build.ps1.  The
-      # "check" target builds tests.exe, runs it, diffs against TESTS-OK, and
-      # exits non-zero on mismatch; the "benchmark" target builds and runs
-      # benchmark.exe to compile-cover its MSVC shim path.  shell: powershell
-      # uses Windows PowerShell 5.1 (shipped with Windows) rather than
-      # PowerShell 7, verifying 5.1 compatibility.
       - name: Build and test (Windows)
         if: runner.os == 'Windows'
         shell: powershell
