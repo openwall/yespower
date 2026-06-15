@@ -1,7 +1,8 @@
 #requires -Version 5.1
 <#
 .COPYRIGHT
-    Copyright 2026 Alexander Peslyak
+    Copyright 2013-2026 Alexander Peslyak
+    Copyright 2026 CPUchain
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
