@@ -21,10 +21,63 @@
 #include <stdio.h>
 #include <stdlib.h> /* for atoi() */
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
+#ifndef _MSC_VER
+#include <unistd.h>
 #include <sys/times.h>
 #include <sched.h>
+#else
+/*
+ * MSVC lacks the POSIX <unistd.h>, <sys/times.h> and <sched.h> interfaces used
+ * below.  Provide a minimal shim implemented on top of the Win32 API so that
+ * benchmark.c builds and the single-threaded benchmark works.  The optional
+ * OpenMP multi-threaded section is only compiled when _OPENMP is defined, which
+ * build.ps1 does not enable for MSVC.
+ */
+#include <windows.h>
+
+struct tms {
+	clock_t tms_utime;
+	clock_t tms_stime;
+	clock_t tms_cutime;
+	clock_t tms_cstime;
+};
+
+#define _SC_CLK_TCK 1
+
+/* Report a 1 ms tick so wall- and CPU-times share the same units. */
+static long sysconf(int name)
+{
+	(void)name;
+	return 1000;
+}
+
+/* 100 ns FILETIME units -> 1 ms ticks. */
+static clock_t filetime_to_ticks(const FILETIME *ft)
+{
+	ULARGE_INTEGER t;
+	t.LowPart = ft->dwLowDateTime;
+	t.HighPart = ft->dwHighDateTime;
+	return (clock_t)(t.QuadPart / 10000);
+}
+
+/* Wall-clock as return value (1 ms ticks), process CPU times in *buf. */
+static clock_t times(struct tms *buf)
+{
+	FILETIME creation, exit, kernel, user;
+	LARGE_INTEGER freq, now;
+
+	GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user);
+	buf->tms_utime = filetime_to_ticks(&user);
+	buf->tms_stime = filetime_to_ticks(&kernel);
+	buf->tms_cutime = 0;
+	buf->tms_cstime = 0;
+
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&now);
+	return (clock_t)(now.QuadPart * 1000 / freq.QuadPart);
+}
+#endif
 
 #include "yespower.h"
 
@@ -138,6 +191,7 @@ int main(int argc, const char * const *argv)
 	    count * clk_tck / (end_v - start_v),
 	    count, (double)(end - start) / clk_tck);
 
+#ifdef _OPENMP
 	for (i = 0; i < nsave; i++) {
 		unsigned int j;
 		for (j = i + 1; j < nsave; j++) {
@@ -149,7 +203,6 @@ int main(int argc, const char * const *argv)
 		}
 	}
 
-#ifdef _OPENMP
 	unsigned int nt = omp_get_max_threads();
 
 	printf("Benchmarking %u thread%s ...\n",
@@ -171,6 +224,7 @@ int main(int argc, const char * const *argv)
 
 	unsigned long long count1 = count, count_restart = 0;
 
+#ifdef SCHED_RR
 	if (!geteuid()) {
 		puts("Running as root, so trying to set SCHED_RR");
 #pragma omp parallel
@@ -180,6 +234,7 @@ int main(int argc, const char * const *argv)
 				perror("sched_setscheduler");
 		}
 	}
+#endif
 
 	start = times(&start_tms);
 

@@ -138,7 +138,13 @@ static void print_yespower_loop(yespower_version_t version, const char *pers)
 
 int main(void)
 {
+#ifdef _MSC_VER
+	/* MSVC's setvbuf() requires a non-NULL buffer for _IOLBF and crashes
+	 * otherwise; use unbuffered output to get the same prompt-flush behavior. */
+	setvbuf(stdout, NULL, _IONBF, 0);
+#else
 	setvbuf(stdout, NULL, _IOLBF, 0);
+#endif
 
 #ifdef TEST_PBKDF2_SHA256
 	print_PBKDF2_SHA256("password", "salt", 1, 20);
